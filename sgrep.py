@@ -390,51 +390,50 @@ def main(yaml_file_or_dirs: str, target_files_or_dirs: List[str], validate: bool
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Helper to invoke sgrep with many patterns or files",
-        prog="sgrep-lint",
+        description="sgrep CLI. For more information about sgrep, go to https://sgrep.dev/",
+        prog="sgrep",
     )
 
-    ### config options
+    ### Input files
+    parser.add_argument("target", nargs="*", default=".", help="Files to search (by default, entire directory passed to docker is searched). Implied argument if piping to sgrep.")
+
+    ### Config options
     config = parser.add_argument_group("config")
     config_ex = config.add_mutually_exclusive_group(required=True)
-
     config_ex.add_argument(
         "-f",
         "--config",
-        help=f"the YAML file or directory of YAML files ending in {','.join(YML_EXTENSIONS)} with rules",
-        default=".sgrep.yml",
-    )
-    config_ex.add_argument(
-        "--config-url", help="remote HTTP url to load a config YAML file from"
+        help="Config YAML file or directory of YAML files ending in .yml|.yaml, OR URL of a config file, OR sgrep registry entry name. See the README for sgrep for information on config file format.",
     )
     config_ex.add_argument("-e", "--pattern", help="sgrep pattern")
     config.add_argument(
         "-l",
         "--lang",
-        help="Must be used with -e/--pattern. Sets the lanaguge of the pattern",
+        help="Parses pattern and all files in specified language. Must be used with -e/--pattern.",
     )
-    config.add_argument("--r2c-rules", help="adds the offical r2c rules", action="store_true")
 
-    ### output options
-    output = parser.add_argument_group("output")
-    output.add_argument("--json", help="output in JSON format", action="store_true")
-    output.add_argument("--output-url", help="url to post the output to")
-    output.add_argument(
+    config.add_argument(
         "--validate",
-        help=f"only validate that the YAML files with rules are correctly form, then exit 0 if ok",
+        help="Validate config file(s) specified by -f/--config. No search is performed.",
         action="store_true",
     )
-    output.add_argument("-q", "--quiet", help="run quietly", action="store_true")
-    output.add_argument("-o", "--output", help="save the output to a file")
+    
+    ### Cutput options
+    output = parser.add_argument_group("output")
+    output.add_argument("-o", "--output", help="Save search results to a file or post to URL. Default is to print to stdout.")
+    output.add_argument("--json", help="Convert search output to JSON format.", action="store_true")
+    output.add_argument("-q", "--quiet", help="Do not print anything to stdout. Search results will still be saved to the output file specified by -o/--output. Exit code provides success status.", action="store_true")
+    
+    
     ### logging options
     logging = parser.add_argument_group("logging")
-
     logging.add_argument(
-        "-v", "--verbose", help=f"increase the verbosity", action="store_true"
+        "-v", "--verbose", help=f"Sets the logging level to verbose. E.g. statements about which files are being processed will be printed.", action="store_true"
     )
-    ### input files
-    parser.add_argument("target", nargs="*", default="/home/repo")
-
+    
+    ### Parse and validate
+    args = parser.parse_args()
+    
     ### Parse and validate
     args = parser.parse_args()
     if args.lang and not args.pattern:
